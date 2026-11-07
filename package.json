@@ -1,0 +1,12 @@
+{
+  "name": "clinpath-medgemma-local",
+  "version": "2.0.0",
+  "description": "Offline AI Clinical Patient Simulator powered by Google MedGemma via Ollama",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
