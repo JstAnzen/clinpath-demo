@@ -40,7 +40,7 @@
                 <p class="eyebrow">A PRACTICE SPACE FOR MBBS AND PSYCHOLOGY STUDENTS</p>
                 <h1 class="hero-title">Learn to reach a well-supported conclusion.</h1>
                 <p class="hero-subtitle">
-                    Select a clinical department below. MedGemma AI will dynamically generate a brand-new patient, backstory, symptoms, and diagnosis every session.
+                    Select a department and support level. ClinPath loads one matching teaching case from that specialty's workbook for each session.
                 </p>
             </div>
 
@@ -51,7 +51,7 @@
                         <span class="step-number">01</span>
                         <div>
                             <h2>Choose a specialty department</h2>
-                            <p class="step-sub">MedGemma AI will invent a unique patient case in this department.</p>
+                            <p class="step-sub">Starting a session loads a case from that specialty's dataset.</p>
                         </div>
                     </div>
 
@@ -60,8 +60,8 @@
                             <input type="radio" name="specialtyOption" value="Cardiology" checked />
                             <div class="radio-card-body">
                                 <div class="radio-title">Cardiology</div>
-                                <div class="radio-desc">AI generates acute chest pain, arrhythmias, heart failure, or vascular emergencies.</div>
-                                <span class="dept-pill">Cardiology & Internal Medicine · MedGemma AI</span>
+                                <div class="radio-desc">Choose from dataset cases covering chest pain, cardiac rhythm, heart failure, and vascular presentations.</div>
+                                <span class="dept-pill">Cardiology · Dataset cases</span>
                             </div>
                         </label>
 
@@ -69,8 +69,8 @@
                             <input type="radio" name="specialtyOption" value="Neurology" />
                             <div class="radio-card-body">
                                 <div class="radio-title">Neurology</div>
-                                <div class="radio-desc">AI generates headaches, visual auras, stroke/TIA, meningeal, or cranial nerve cases.</div>
-                                <span class="dept-pill">Neurology & Neuro-Emergency · MedGemma AI</span>
+                                <div class="radio-desc">Choose from dataset cases covering headache, stroke/TIA, and other neurologic presentations.</div>
+                                <span class="dept-pill">Neurology · Dataset cases</span>
                             </div>
                         </label>
 
@@ -78,8 +78,8 @@
                             <input type="radio" name="specialtyOption" value="Psychiatry" />
                             <div class="radio-card-body">
                                 <div class="radio-title">Psychiatry & Psychology</div>
-                                <div class="radio-desc">AI generates mood disorders, panic attacks, trauma, anxiety, or bipolar presentations.</div>
-                                <span class="dept-pill">Psychiatry & Behavioral Medicine · MedGemma AI</span>
+                                <div class="radio-desc">Choose from dataset cases covering mood, anxiety, trauma, and related presentations.</div>
+                                <span class="dept-pill">Psychiatry & Psychology · Dataset cases</span>
                             </div>
                         </label>
 
@@ -87,8 +87,8 @@
                             <input type="radio" name="specialtyOption" value="Pulmonology" />
                             <div class="radio-card-body">
                                 <div class="radio-title">Pulmonology</div>
-                                <div class="radio-desc">AI generates acute dyspnea, pulmonary embolism, asthma, COPD, or pneumonia cases.</div>
-                                <span class="dept-pill">Pulmonology & Critical Care · MedGemma AI</span>
+                                <div class="radio-desc">Choose from dataset cases covering breathlessness, asthma, COPD, and other lung presentations.</div>
+                                <span class="dept-pill">Pulmonology · Dataset cases</span>
                             </div>
                         </label>
 
@@ -96,8 +96,8 @@
                             <input type="radio" name="specialtyOption" value="Gastroenterology" />
                             <div class="radio-card-body">
                                 <div class="radio-title">Gastroenterology & Surgery</div>
-                                <div class="radio-desc">AI generates acute abdominal pain, appendicitis, biliary, or GI emergencies.</div>
-                                <span class="dept-pill">Gastroenterology & General Surgery · MedGemma AI</span>
+                                <div class="radio-desc">Choose from dataset cases covering abdominal pain, reflux, biliary, and other GI presentations.</div>
+                                <span class="dept-pill">Gastroenterology · Dataset cases</span>
                             </div>
                         </label>
                     </div>
@@ -119,7 +119,7 @@
                             <div class="radio-card-body">
                                 <div class="radio-title">Beginner</div>
                                 <div class="radio-tag">Guided learning</div>
-                                <div class="radio-desc">See AI-generated suggested questions while you practise (ask your own follow-ups too for full 5/5 credit).</div>
+                                <div class="radio-desc">See expected questions from the selected case while you practise (ask your own follow-ups too for full 5/5 credit).</div>
                             </div>
                         </label>
 
@@ -144,7 +144,7 @@
 
                     <div class="setup-actions">
                         <button id="startConsultationBtn" class="btn-primary-teal full-width">
-                            ✨ Generate AI Patient & Start Consultation →
+                            📂 Load Dataset Case & Start Consultation →
                         </button>
                     </div>
                 </div>
@@ -158,7 +158,7 @@
             <div class="encounter-header-card">
                 <div class="encounter-top-row">
                     <div>
-                        <span id="activeDeptBadge" class="dept-pill">Cardiology · MedGemma AI</span>
+                        <span id="activeDeptBadge" class="dept-pill">Cardiology · Dataset case</span>
                         <h2 id="activeCaseTitle" class="encounter-title">Generating Patient...</h2>
                         <p id="activePatientPersona" class="encounter-persona">—</p>
                     </div>
@@ -175,6 +175,7 @@
                     <div class="vital-chip"><span>Temp</span> <strong id="vTemp">--</strong></div>
                     <div class="vital-chip"><span>SpO2</span> <strong id="vSpo2">--</strong></div>
                 </div>
+                <p id="activeDatasetNotice" class="muted-small" style="margin: 12px 0 0;"></p>
             </div>
 
             <div class="interview-grid">
@@ -428,7 +429,7 @@
             <div id="continuePracticeCard" class="continue-practice-banner" style="cursor: pointer;">
                 <div>
                     <h3>Continue Practice →</h3>
-                    <p>Click here to return to Practice and generate a new patient across different specialties.</p>
+                    <p>Return to Practice to choose another dataset case or specialty.</p>
                 </div>
             </div>
 

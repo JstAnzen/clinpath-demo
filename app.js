@@ -70,11 +70,11 @@ async function checkAiConnection() {
     if (data.online) {
       aiStatusPill.classList.remove('offline');
       aiStatusDot.classList.remove('offline');
-      statusText.textContent = `AI Connected · ${data.model}`;
+      statusText.textContent = `AI Connected · ${data.model} · ${data.datasetSpecialties?.length || 0}/5 datasets`;
     } else {
       aiStatusPill.classList.add('offline');
       aiStatusDot.classList.add('offline');
-      statusText.textContent = 'AI Disconnected (Run Ollama)';
+      statusText.textContent = `AI Disconnected · ${data.datasetSpecialties?.length || 0}/5 datasets · Run Ollama`;
     }
   } catch (err) {
     aiStatusPill.classList.add('offline');
@@ -137,7 +137,7 @@ function bindEvents() {
 
   startConsultationBtn.addEventListener('click', async () => {
     startConsultationBtn.disabled = true;
-    startConsultationBtn.textContent = `⏳ MedGemma is generating a new ${selectedSpecialty} patient...`;
+    startConsultationBtn.textContent = `⏳ Loading a ${selectedSpecialty} dataset case...`;
 
     try {
       const res = await fetch('/api/start-session', {
@@ -161,7 +161,7 @@ function bindEvents() {
       alert('Could not reach local server. Ensure node server.js and Ollama are running.');
     } finally {
       startConsultationBtn.disabled = false;
-      startConsultationBtn.textContent = '✨ Generate AI Patient & Start Consultation →';
+      startConsultationBtn.textContent = '📂 Load Dataset Case & Start Consultation →';
     }
   });
 
@@ -218,6 +218,13 @@ function launchInterviewWorkspace(data) {
   activeDeptBadge.textContent = c.departmentTag;
   activeCaseTitle.textContent = c.title;
   activePatientPersona.textContent = c.patient;
+  const datasetNotice = document.getElementById('activeDatasetNotice');
+  const metadata = c.datasetMetadata || {};
+  datasetNotice.textContent = [
+    metadata.caseId ? `Case ${metadata.caseId}` : '',
+    metadata.reviewStatus || 'Dataset review status unavailable',
+    metadata.sourceTitle ? `Source: ${metadata.sourceTitle}` : ''
+  ].filter(Boolean).join(' · ');
 
   const levelLabels = {
     Beginner: 'Beginner · Guided learning',
