@@ -728,6 +728,55 @@ button:disabled {
     color: var(--text-secondary);
 }
 
+.rubric-feedback-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin: 0 0 20px;
+}
+
+.rubric-area-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 18px;
+}
+
+.rubric-area-card h3 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+}
+
+.rubric-area-card p {
+    margin: 8px 0 0;
+    color: var(--text-secondary);
+    line-height: 1.45;
+}
+
+.rubric-area-card strong {
+    color: var(--text-primary);
+}
+
+.agent-step-note {
+    align-self: center;
+    max-width: 96%;
+    padding: 7px 11px;
+    border: 1px solid #c9d6ea;
+    border-radius: 999px;
+    background: #f2f6fc;
+    color: #465976;
+    font-size: 0.76rem;
+    line-height: 1.35;
+    text-align: center;
+}
+
+.chat-bubble.coach {
+    align-self: center;
+    background: #fff8e7;
+    border: 1px solid #ead8a7;
+    color: #5d4c23;
+}
+
     .comp-pill strong {
         color: var(--text-primary);
         margin-right: 4px;
@@ -932,6 +981,7 @@ button:disabled {
     .interview-grid,
     .verification-two-col,
     .feedback-grid,
+    .rubric-feedback-grid,
     .progress-kpi-grid {
         grid-template-columns: 1fr;
     }

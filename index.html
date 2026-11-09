@@ -40,9 +40,10 @@
                 <p class="eyebrow">A PRACTICE SPACE FOR MBBS AND PSYCHOLOGY STUDENTS</p>
                 <h1 class="hero-title">Learn to reach a well-supported conclusion.</h1>
                 <p class="hero-subtitle">
-                    Select a department and support level. ClinPath loads one matching teaching case from that specialty's workbook for each session.
+                    Choose a support level for a fictional, educator-reviewed Cardiology history-taking case.
                 </p>
             </div>
+            <p id="caseReadinessMessage" class="muted-small" role="status"></p>
 
             <div class="setup-grid">
                 <!-- STEP 01: CHOOSE SPECIALTY FOR AI GENERATION -->
@@ -51,7 +52,7 @@
                         <span class="step-number">01</span>
                         <div>
                             <h2>Choose a specialty department</h2>
-                            <p class="step-sub">Starting a session loads a case from that specialty's dataset.</p>
+                            <p class="step-sub">Choose from the five connected specialty datasets. Only educator-approved cases can be started.</p>
                         </div>
                     </div>
 
@@ -184,7 +185,7 @@
                     <div class="card-section-header">
                         <div>
                             <h3>Patient Interview</h3>
-                            <p class="muted-small">MedGemma evaluates every question in real time and replies in character.</p>
+                            <p class="muted-small">The tutor tracks uncovered case facts and chooses a bounded next action after each question.</p>
                         </div>
                         <span id="questionsCountBadge" class="counter-pill">0 valid questions</span>
                     </div>
@@ -252,11 +253,11 @@
                     </div>
 
                     <div class="field-group">
-                        <label for="diagnosisInput">3. Definitive Diagnostic Impression</label>
-                        <span class="field-helper">State your primary medical diagnosis.</span>
+                        <label for="diagnosisInput">3. Provisional Assessment</label>
+                        <span class="field-helper">State your working impression for this fictional case.</span>
                         <input type="text"
                                id="diagnosisInput"
-                               placeholder="Enter your final medical diagnosis..." />
+                               placeholder="Enter your provisional assessment..." />
                     </div>
 
                     <button id="submitConsultationBtn" class="btn-primary-teal full-width">
@@ -275,10 +276,16 @@
                     <p class="eyebrow">CASE OUTCOME & MEDGEMMA DIAGNOSTIC VERIFICATION</p>
                     <h1 class="review-main-title">Consultation Review</h1>
                     <p class="hero-subtitle">
-                        Compare your clinical reasoning against the verified pathology and MedGemma Examiner evaluation (0–5 scale).
+                        Review case-grounded feedback for learning. A single simulation does not establish clinical competence.
                     </p>
                 </div>
                 <span id="reviewSupportSummaryPill" class="support-mode-pill">Beginner · 0 support action(s)</span>
+            </div>
+
+            <div class="feedback-card full-width-card">
+                <h4>Case source and educator review</h4>
+                <p id="reviewCaseSource">—</p>
+                <p id="reviewCaseStatus">—</p>
             </div>
 
             <div id="verificationBox" class="verification-box">
@@ -307,8 +314,9 @@
                 </div>
             </div>
 
-            <!-- 7 COMPETENCY SCORE PILLS (0/5 to 5/5) -->
+            <!-- Rubric area scores and evidence -->
             <div id="competencyPillsRow" class="competency-pills-row"></div>
+            <div id="rubricFeedbackGrid" class="rubric-feedback-grid"></div>
 
             <!-- 6 FEEDBACK CARDS GRID WRITTEN BY MEDGEMMA -->
             <div class="feedback-grid">
