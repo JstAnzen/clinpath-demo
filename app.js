@@ -4,8 +4,6 @@ const STORAGE_KEY = 'clinpath_ai_progress_v5';
 let selectedSpecialty = 'Cardiology';
 let selectedSupportLevel = 'Beginner';
 let activeGuidedQuestions = [];
-let approvedCasesAvailable = false;
-let approvedCasesByDifficulty = {};
 
 // Views
 const setupView = document.getElementById('setupView');
@@ -65,44 +63,24 @@ window.addEventListener('DOMContentLoaded', async () => {
   bindEvents();
 });
 
-async function checkAiConnection(specialty = selectedSpecialty) {
-  startConsultationBtn.disabled = true;
+async function checkAiConnection() {
   try {
-    const res = await fetch(`/api/status?specialty=${encodeURIComponent(specialty)}`);
+    const res = await fetch('/api/status');
     const data = await res.json();
-    approvedCasesByDifficulty = data.approvedCasesByDifficulty || {};
-    updateCaseReadiness();
     if (data.online) {
       aiStatusPill.classList.remove('offline');
       aiStatusDot.classList.remove('offline');
-      statusText.textContent = `AI Connected · ${data.model} · ${data.approvedCaseCount || 0} reviewed cases`;
+      statusText.textContent = `AI Connected · ${data.model} · ${data.datasetSpecialties?.length || 0}/5 datasets`;
     } else {
       aiStatusPill.classList.add('offline');
       aiStatusDot.classList.add('offline');
-      statusText.textContent = `AI Disconnected · ${data.approvedCaseCount || 0} reviewed cases · Run Ollama`;
+      statusText.textContent = `AI Disconnected · ${data.datasetSpecialties?.length || 0}/5 datasets · Run Ollama`;
     }
   } catch (err) {
     aiStatusPill.classList.add('offline');
     aiStatusDot.classList.add('offline');
     statusText.textContent = 'AI Disconnected';
-    document.getElementById('caseReadinessMessage').textContent = `Could not check the ${specialty} dataset status.`;
   }
-}
-
-function updateCaseReadiness() {
-  const totalApproved = Object.values(approvedCasesByDifficulty).reduce((sum, count) => sum + Number(count || 0), 0);
-  const levelCount = Number(approvedCasesByDifficulty[selectedSupportLevel]) || 0;
-  approvedCasesAvailable = levelCount > 0;
-  startConsultationBtn.disabled = !approvedCasesAvailable;
-  startConsultationBtn.textContent = approvedCasesAvailable
-    ? `📂 Start reviewed ${selectedSpecialty} case →`
-    : 'Waiting for educator-reviewed cases';
-  const message = totalApproved === 0
-    ? `No educator-approved ${selectedSpecialty} cases are available yet. A qualified educator must review cases in that workbook, set Review Status to “Approved”, and fill in Reviewer and Reviewer Qualification.`
-    : approvedCasesAvailable
-      ? `${levelCount} educator-approved ${selectedSupportLevel} ${selectedSpecialty} case(s) available.`
-      : `No educator-approved ${selectedSupportLevel} ${selectedSpecialty} cases are available. Choose another support level or ask the educator to review cases at this level.`;
-  document.getElementById('caseReadinessMessage').textContent = message;
 }
 
 function showView(viewName) {
@@ -145,7 +123,6 @@ function bindEvents() {
       specialtyListContainer.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
       card.querySelector('input').checked = true;
-      checkAiConnection(selectedSpecialty);
     });
   });
 
@@ -155,7 +132,6 @@ function bindEvents() {
       supportLevelList.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
       card.querySelector('input').checked = true;
-      updateCaseReadiness();
     });
   });
 
@@ -184,10 +160,8 @@ function bindEvents() {
     } catch (err) {
       alert('Could not reach local server. Ensure node server.js and Ollama are running.');
     } finally {
-      startConsultationBtn.disabled = !approvedCasesAvailable;
-      startConsultationBtn.textContent = approvedCasesAvailable
-        ? `📂 Start reviewed ${selectedSpecialty} case →`
-        : 'Waiting for educator-reviewed cases';
+      startConsultationBtn.disabled = false;
+      startConsultationBtn.textContent = '📂 Load Dataset Case & Start Consultation →';
     }
   });
 
@@ -212,7 +186,6 @@ function bindEvents() {
         alert(data.error || 'No hints remaining.');
         return;
       }
-      appendAgentStep(data.agent);
       const note = document.createElement('div');
       note.className = 'hint-note';
       note.textContent = `Clue ${data.hintsUsed}: ${data.hint}`;
@@ -240,7 +213,7 @@ function bindEvents() {
 
 function launchInterviewWorkspace(data) {
   const c = data.caseData;
-  questionsCountBadge.textContent = '0 valid questions · 0/30 turns';
+  questionsCountBadge.textContent = '0 valid questions';
 
   activeDeptBadge.textContent = c.departmentTag;
   activeCaseTitle.textContent = c.title;
@@ -250,7 +223,6 @@ function launchInterviewWorkspace(data) {
   datasetNotice.textContent = [
     metadata.caseId ? `Case ${metadata.caseId}` : '',
     metadata.reviewStatus || 'Dataset review status unavailable',
-    metadata.reviewer ? `Reviewed by ${metadata.reviewer}${metadata.reviewerQualification ? ` (${metadata.reviewerQualification})` : ''}` : '',
     metadata.sourceTitle ? `Source: ${metadata.sourceTitle}` : ''
   ].filter(Boolean).join(' · ');
 
@@ -324,23 +296,6 @@ function appendChatBubble(role, text) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-function appendAgentStep(agent) {
-  if (!agent) return;
-  const labels = {
-    answer_patient: 'Answered using selected case facts',
-    ask_clarifying_question: 'Asked you to clarify',
-    offer_optional_hint: 'Offered a hint',
-    prompt_summary: 'Prompted a findings summary',
-    request_provisional_assessment: 'Requested your provisional assessment',
-    end_interview: 'Ready for your assessment',
-    safety_redirect: 'Safety redirect'
-  };
-  const note = document.createElement('div');
-  note.className = 'agent-step-note';
-  note.textContent = `Tutor action · ${labels[agent.action] || agent.action} (${agent.step || 1}/${agent.maxSteps || 3} step${(agent.maxSteps || 3) === 1 ? '' : 's'}): ${agent.reason || 'Selected the next bounded action.'}`;
-  chatMessages.appendChild(note);
-}
-
 async function sendQuestionToPatient(questionText, isGuided) {
   appendChatBubble('doctor', questionText);
 
@@ -363,9 +318,8 @@ async function sendQuestionToPatient(questionText, isGuided) {
       return;
     }
 
-    appendAgentStep(data.agent);
-    appendChatBubble(data.replyRole || 'patient', data.reply);
-    questionsCountBadge.textContent = `${data.validQuestionsCount || 0} valid question(s) · ${data.learnerTurnCount || 0}/30 turns`;
+    appendChatBubble('patient', data.reply);
+    questionsCountBadge.textContent = `${data.validQuestionsCount || 0} valid question(s)`;
   } catch (err) {
     appendChatBubble('patient', 'Connection error with local MedGemma.');
   } finally {
@@ -406,16 +360,10 @@ async function submitAndEvaluate() {
 
 function safeScoreNumber(v) {
   if (v && typeof v === 'object') {
-    return safeScoreNumber(v.score ?? v.val ?? v.value);
+    return Number(v.score ?? v.val ?? v.value ?? 0);
   }
-  if (v === null || v === undefined || v === '') return null;
   const n = Number(v);
-  return Number.isNaN(n) ? null : n;
-}
-
-function averageScore(records, key) {
-  const values = records.map(record => safeScoreNumber(record.scores?.[key])).filter(Number.isFinite);
-  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+  return Number.isNaN(n) ? 0 : n;
 }
 
 function renderConsultationReview(r) {
@@ -440,25 +388,6 @@ function renderConsultationReview(r) {
   document.getElementById('reviewSubmittedImpression').textContent = r.submittedImpression;
   document.getElementById('reviewClinicalSituation').textContent = r.clinicalSituation;
 
-  const source = r.datasetMetadata || {};
-  const sourceNode = document.getElementById('reviewCaseSource');
-  sourceNode.replaceChildren();
-  if (source.sourceTitle) sourceNode.append(document.createTextNode(source.sourceTitle));
-  if (source.sourceUrl && /^https:\/\//i.test(source.sourceUrl)) {
-    const link = document.createElement('a');
-    link.href = source.sourceUrl;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.textContent = 'Open source';
-    sourceNode.append(document.createTextNode(source.sourceTitle ? ' · ' : ''), link);
-  }
-  if (source.sourceDate) sourceNode.append(document.createTextNode(` · Source date: ${source.sourceDate}`));
-  document.getElementById('reviewCaseStatus').textContent = [
-    source.caseId ? `Case ${source.caseId}` : '',
-    source.reviewStatus || 'Review status unavailable',
-    source.reviewer ? `Reviewed by ${source.reviewer}${source.reviewerQualification ? ` (${source.reviewerQualification})` : ''}` : ''
-  ].filter(Boolean).join(' · ');
-
   const anchorsList = document.getElementById('reviewAnchorsList');
   anchorsList.innerHTML = '';
   r.anchors.forEach(a => {
@@ -471,57 +400,25 @@ function renderConsultationReview(r) {
   ruleOutsList.innerHTML = '';
   r.ruleOuts.forEach(ro => {
     const li = document.createElement('li');
-    const strong = document.createElement('strong');
-    strong.textContent = `${ro.name}: `;
-    li.append(strong, document.createTextNode(ro.reason));
+    li.innerHTML = `<strong>${ro.name}:</strong> ${ro.reason}`;
     ruleOutsList.appendChild(li);
   });
 
-  const areaDefs = [
-    ['historyStructureCoverage', 'History structure and coverage'],
-    ['followUpImportantClues', 'Follow-up on important clues'],
-    ['positiveNegativeFindings', 'Relevant positive and negative findings'],
-    ['clinicalReasoningEvidence', 'Clinical reasoning and use of evidence'],
-    ['plausibleAlternatives', 'Plausible alternatives'],
-    ['communication', 'Clear, respectful communication'],
-    ['independenceAndHints', 'Independence and hint use']
-  ];
-  const areas = r.rubricAreas || {};
+  // Fixed: uses p.val (never prints [object Object]/5)
+  const s = r.scores || {};
   const pillsRow = document.getElementById('competencyPillsRow');
-  pillsRow.innerHTML = areaDefs
-    .map(([key, label]) => {
-      const score = areas[key]?.score;
-      const shown = Number.isInteger(score) ? `${score}/4` : 'Not enough evidence';
-      return `<div class="comp-pill"><strong>${shown}</strong> ${label}</div>`;
-    })
+  const pillDefs = [
+    { val: safeScoreNumber(s.historyTaking), label: 'History taking' },
+    { val: safeScoreNumber(s.observation), label: 'Observation' },
+    { val: safeScoreNumber(s.clinicalReasoning), label: 'Clinical reasoning' },
+    { val: safeScoreNumber(s.differentialDiagnoses), label: 'Differential diagnoses' },
+    { val: safeScoreNumber(s.finalConclusion), label: 'Final conclusion' },
+    { val: safeScoreNumber(s.communication), label: 'Communication' },
+    { val: safeScoreNumber(s.independentApplication), label: 'Independent application' }
+  ];
+  pillsRow.innerHTML = pillDefs
+    .map(p => `<div class="comp-pill"><strong>${p.val}/5</strong> ${p.label}</div>`)
     .join('');
-
-  const rubricGrid = document.getElementById('rubricFeedbackGrid');
-  rubricGrid.replaceChildren();
-  for (const [key, label] of areaDefs) {
-    const area = areas[key] || {};
-    const card = document.createElement('article');
-    card.className = 'rubric-area-card';
-    const heading = document.createElement('h3');
-    const score = document.createElement('span');
-    score.textContent = Number.isInteger(area.score) ? `${area.score}/4` : 'Not enough evidence';
-    heading.textContent = `${label} · ${score.textContent}`;
-    card.appendChild(heading);
-    const fields = [
-      ['What you did well', area.whatWentWell],
-      ['What was missed', area.missed],
-      ['Interview example', area.exampleFromInterview],
-      ['Next-case suggestion', area.actionableSuggestion]
-    ];
-    fields.forEach(([fieldLabel, value]) => {
-      const p = document.createElement('p');
-      const strong = document.createElement('strong');
-      strong.textContent = `${fieldLabel}: `;
-      p.append(strong, document.createTextNode(value || 'Not enough evidence in this session.'));
-      card.appendChild(p);
-    });
-    rubricGrid.appendChild(card);
-  }
 
   document.getElementById('fbWhatWell').textContent = r.whatYouDidWell;
   document.getElementById('fbWhatMissed').textContent = r.whatYouMissed;
@@ -572,11 +469,11 @@ function renderProgressDashboard() {
   document.getElementById('kpiAdvancedCases').textContent = advRecords.length;
 
   if (advRecords.length > 0) {
-    const avgInd = averageScore(advRecords, 'independentApplication');
-    document.getElementById('kpiIndependenceIndex').textContent = avgInd === null ? 'Not enough evidence' : `${avgInd.toFixed(1)} / 5`;
-    document.getElementById('advancedTrajectoryBox').textContent = avgInd === null
-      ? `Completed ${advRecords.length} Advanced session(s), but there is not enough evidence to average independence scores.`
-      : `Completed ${advRecords.length} Advanced session(s) with an average independent reasoning indicator of ${avgInd.toFixed(1)} / 5.`;
+    const avgInd =
+      advRecords.reduce((acc, r) => acc + safeScoreNumber(r.scores.independentApplication), 0) / advRecords.length;
+    document.getElementById('kpiIndependenceIndex').textContent = `${avgInd.toFixed(1)} / 5`;
+    document.getElementById('advancedTrajectoryBox').textContent =
+      `Completed ${advRecords.length} Advanced session(s) with an average independent reasoning indicator of ${avgInd.toFixed(1)} / 5.`;
   } else {
     document.getElementById('kpiIndependenceIndex').textContent = '—';
     document.getElementById('advancedTrajectoryBox').textContent =
@@ -605,7 +502,9 @@ function renderProgressDashboard() {
           </div>
         `;
       }
-      const avgReason = averageScore(subset, 'clinicalReasoning');
+      const avgReason = (
+        subset.reduce((a, b) => a + safeScoreNumber(b.scores.clinicalReasoning), 0) / count
+      ).toFixed(1);
       const avgClues = (
         subset.reduce((a, b) => a + (b.supportActionsUsed || 0), 0) / count
       ).toFixed(1);
@@ -614,7 +513,7 @@ function renderProgressDashboard() {
           <div class="radio-title">${lvl.key}</div>
           <div class="kpi-sub">${lvl.sub}</div>
           <div style="margin-top:8px;font-size:0.9rem;"><strong>${count}</strong> encounter(s)</div>
-          <div style="font-size:0.9rem;"><strong>${avgReason === null ? 'Not enough evidence' : `${avgReason.toFixed(1)} / 5`}</strong> reasoning score</div>
+          <div style="font-size:0.9rem;"><strong>${avgReason} / 5</strong> reasoning score</div>
           <div class="kpi-sub">Average clues: <strong>${avgClues}</strong></div>
         </div>
       `;
@@ -645,16 +544,7 @@ function renderProgressDashboard() {
           </div>
         `;
       }
-      const avg = averageScore(records, sk.key);
-      if (avg === null) {
-        return `
-          <div class="skill-row">
-            <div class="skill-name">${sk.label}</div>
-            <div class="skill-bar-track"><div class="skill-bar-fill" style="width: 0%"></div></div>
-            <div class="skill-meta">Not enough evidence to show an average.</div>
-          </div>
-        `;
-      }
+      const avg = records.reduce((a, b) => a + safeScoreNumber(b.scores[sk.key]), 0) / totalCases;
       const pct = Math.min(100, Math.round((avg / 5) * 100));
       const statusLabel =
         avg >= 3.2 ? 'Developing competency.' : 'Priority focus area for further practice.';

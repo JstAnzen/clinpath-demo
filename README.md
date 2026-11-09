@@ -1,6 +1,6 @@
 # ClinPath Clinical Reasoning Practice Demo
 
-A local, fictional clinical history-taking tutor using HTML, CSS, browser JavaScript, Node.js, and local Ollama/MedGemma. The agent workflow supports Cardiology, Neurology, Psychiatry & Psychology, Pulmonology, and Gastroenterology & Surgery.
+A local clinical reasoning practice app using HTML, CSS, browser JavaScript, and Node.js. The server reads the selected case directly from one of the five specialty workbooks in this folder.
 
 ## Start the demo
 
@@ -22,28 +22,22 @@ node server.js
 
 The dataset case is selected locally by the Node server. MedGemma is used for simulated patient replies and the case review.
 
-## Educator-approved case gate
+## Dataset-backed workflow
 
-The server only makes a case available when its row has `Review Status` exactly `Approved`, a non-empty `Reviewer` and `Reviewer Qualification`, and all required profile, history, answer-key, alternative, source, and source-date fields. A qualified educator must perform the review and enter the approval. The app does not mark cases approved on its own. Availability is shown separately for each specialty and difficulty.
+1. Start the app and choose a specialty and learner support level.
+2. When the learner starts the consultation, the server reads only that specialty's `.xlsx` workbook and selects one case matching the chosen difficulty.
+3. The server loads that single case into the session.
+4. The selected case's name, age, symptom facts, negatives, vitals, answer key, and differentials are stored in the session. MedGemma writes a new patient opening and rewrites the expected-question topics in original wording.
+5. MedGemma roleplays the patient using that case history when the learner asks questions.
+6. At submission, MedGemma evaluates the learner's notes against the selected case's answer key and diagnosis.
 
-The supplied workbooks currently mark their cases as drafts requiring clinician review. Until an educator reviews and approves cases, the app will show zero available cases for that specialty and keep its session start disabled. This is intentional; it does not treat draft cases as reviewed.
-
-## Agent workflow
-
-1. The learner chooses a specialty and support level. The server checks and reads only that specialty's workbook, then selects one approved case at that level.
-2. MedGemma creates original patient-facing opening and guided-question wording from case facts, without receiving the answer key.
-3. After each learner message, a bounded planner chooses one allowed action. The server validates the action and any fact keys, then runs an allowlisted tool such as revealing up to two relevant patient facts, presenting an explicitly requested hint, asking for clarification, prompting a summary, or requesting a provisional assessment.
-4. Patient replies receive only the selected case's patient-facing facts that have been revealed so far. The answer key is held for the evaluation request after submission.
-5. The session tracks questions, revealed fact fields, hints, notes, and assessment. It allows at most 30 learner turns, 30 minutes, and three agent steps per turn.
-6. After submission, feedback covers seven separate areas with a 0–4 rubric and a `Not enough evidence` option. Examples must be verifiable against the learner's transcript or notes. Hint use alone is not penalized.
-
-The browser never receives the full workbook or answer key before evaluation. The interview shows the selected case ID, source title, and review status. The feedback shows the source title, source date, reviewer, and source link.
+The browser does not receive the full workbook. The server returns the selected case's display fields and its case ID, source title, and review status. Dataset files must remain in this folder with their current filenames. All five files currently label their cases as draft and requiring clinician review; the app displays this status in the interview.
 
 ## What the demo includes
 
-- Five source workbooks are connected: Cardiology, Neurology, Psychiatry & Psychology, Pulmonology, and Gastroenterology & Surgery. The server loads only the selected specialty's workbook for a session.
+- Five specialty workbooks: cardiology, neurology, psychiatry/psychology, pulmonology, and gastroenterology.
 - Beginner, Intermediate, and Advanced modes with different in-session support.
-- Agent-directed, dataset-grounded patient simulation using local MedGemma.
+- Dataset-backed patient simulations, with MedGemma responses when Ollama is running.
 - An editable observation notebook and final diagnosis/reasoning submission.
 - Post-case feedback across history, observations, reasoning, alternatives, diagnosis, communication, and independence.
 - A local progress dashboard, assistance tracking, and optional next-step recommendations.
@@ -51,4 +45,4 @@ The browser never receives the full workbook or answer key before evaluation. Th
 
 ## Important demo limits
 
-This is an educational simulator for fictional cases, not a tool for diagnosing or treating real people. MedGemma can still produce inaccurate dialogue or feedback; educator review is required before cases are used for teaching. Do not enter real patient information. If a message describes a real urgent situation, the tutor directs the learner to professional or emergency care.
+The workbooks mark the cases as synthetic drafts requiring clinician review. MedGemma-generated patient dialogue and feedback can be inaccurate and should be reviewed by an educator before classroom use. This learning demo is not a real-world diagnostic or treatment tool.
